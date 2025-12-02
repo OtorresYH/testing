@@ -142,22 +142,40 @@ Your site is now live!
 
 ---
 
-## 🔧 Environment Variables (Already Configured)
+## 🔧 Environment Variables
 
-The project already has environment variables set up in the `.env` file:
+The project has environment variables set up in the `.env` file:
 
-```
-VITE_SUPABASE_URL=https://0ec90b57d6e95fcbda19832f.supabase.co
+```bash
+# Supabase (already configured)
+VITE_SUPABASE_URL=https://obeuygeumdymphyxorzv.supabase.co
 VITE_SUPABASE_ANON_KEY=[configured]
+
+# OpenAI API Key (required for AI Invoice Generator)
+VITE_OPENAI_API_KEY=your_openai_api_key_here
 ```
+
+### 🤖 Enable AI Invoice Generator (Optional)
+
+To use the AI-powered invoice generation feature:
+
+1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Open `.env` file
+3. Replace `your_openai_api_key_here` with your actual key
+4. Restart the dev server
+
+**See `AI_INVOICE_SETUP.md` for detailed setup instructions.**
+
+Without the OpenAI key, the site works perfectly - just the AI invoice feature won't be available.
 
 **For Vercel Deployment:**
-These environment variables are automatically read from the `.env` file. No additional configuration needed!
+Environment variables are automatically read from the `.env` file.
 
-If you need to update them in Vercel later:
+To update in Vercel:
 1. Go to your project in Vercel Dashboard
 2. Click **Settings** → **Environment Variables**
-3. Add or update variables there
+3. Add `VITE_OPENAI_API_KEY` with your key
+4. Redeploy
 
 ---
 
@@ -206,17 +224,20 @@ whitmore-payments/
 ## ✨ What's Included
 
 ### Interactive Features
+- ✅ **AI Invoice Generator** (NEW!) - Generate invoices from natural language using OpenAI
+- ✅ **Invoice Dashboard** - View, manage, and track all invoices
 - ✅ **Trial signup forms** - Collects leads with validation
 - ✅ **Contact sales forms** - Team plan inquiries
 - ✅ **Demo modal** - Product demonstration
 - ✅ **Smooth scroll navigation** - Header links scroll to sections
 - ✅ **FAQ accordion** - Expandable questions
-- ✅ **Database integration** - All forms save to Supabase
+- ✅ **Database integration** - All forms and invoices save to Supabase
 
 ### Technical Features
 - ✅ **React 18** with TypeScript
+- ✅ **OpenAI GPT-4** integration for AI features
 - ✅ **Tailwind CSS** for styling
-- ✅ **Supabase** database backend
+- ✅ **Supabase** database backend with RLS
 - ✅ **Form validation** with error handling
 - ✅ **Responsive design** - Works on mobile, tablet, desktop
 - ✅ **Accessible** - Keyboard navigation, ARIA labels

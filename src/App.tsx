@@ -13,12 +13,15 @@ import { Footer } from './components/Footer';
 import { SignupModal } from './components/SignupModal';
 import { DemoModal } from './components/DemoModal';
 import { ContactSalesModal } from './components/ContactSalesModal';
+import { InvoiceGeneratorModal } from './components/InvoiceGeneratorModal';
 
 function App() {
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [contactSalesModalOpen, setContactSalesModalOpen] = useState(false);
+  const [invoiceGeneratorOpen, setInvoiceGeneratorOpen] = useState(false);
   const [signupSource, setSignupSource] = useState('unknown');
+  const [userEmail, setUserEmail] = useState('demo@example.com'); // In real app, this would come from auth
 
   const handleStartTrial = (source: string = 'unknown') => {
     setSignupSource(source);
@@ -33,6 +36,10 @@ function App() {
     setContactSalesModalOpen(true);
   };
 
+  const handleOpenInvoiceGenerator = () => {
+    setInvoiceGeneratorOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Header onStartTrial={() => handleStartTrial('header')} />
@@ -41,7 +48,7 @@ function App() {
           onStartTrial={() => handleStartTrial('hero')}
           onWatchDemo={handleWatchDemo}
         />
-        <Features />
+        <Features onTryAI={handleOpenInvoiceGenerator} />
         <Audience />
         <Testimonials />
         <Stats />
@@ -67,6 +74,11 @@ function App() {
       <ContactSalesModal
         isOpen={contactSalesModalOpen}
         onClose={() => setContactSalesModalOpen(false)}
+      />
+      <InvoiceGeneratorModal
+        isOpen={invoiceGeneratorOpen}
+        onClose={() => setInvoiceGeneratorOpen(false)}
+        userEmail={userEmail}
       />
     </div>
   );
