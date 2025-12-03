@@ -8,7 +8,7 @@ interface ModalProps {
   title?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -72,3 +72,6 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }
     </div>
   );
 };
+
+export { Modal };
+export default Modal;

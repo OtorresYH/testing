@@ -10,7 +10,7 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
@@ -44,3 +44,6 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
+
+export { Button };
+export default Button;

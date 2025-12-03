@@ -1,6 +1,6 @@
-# Whitmore PAYMENTS - SaaS Landing Page
+# Whitmore PAYMENTS - Invoice & Payment SaaS
 
-A fully functional, production-ready SaaS landing page with real database integration, form submissions, and interactive elements.
+A fully functional, production-ready invoice and payment management system with Supabase authentication, database integration, Stripe payments, and email notifications.
 
 ## 🚀 Quick Start - Run Locally
 
@@ -26,7 +26,26 @@ npm install
 
 This will download all the necessary packages. It takes about 1-2 minutes.
 
-### Step 2: Start the Development Server
+### Step 2: Configure Environment Variables
+
+The project requires several environment variables. These are already configured in the `.env` file:
+
+```bash
+# Supabase (already configured)
+VITE_SUPABASE_URL=https://obeuygeumdymphyxorzv.supabase.co
+VITE_SUPABASE_ANON_KEY=[configured]
+
+# OpenAI API Key (optional - for AI Invoice Generator)
+VITE_OPENAI_API_KEY=your_openai_api_key_here
+```
+
+The Supabase database is already set up with:
+- User authentication
+- Invoice management
+- Payment tracking
+- Row Level Security policies
+
+### Step 3: Start the Development Server
 
 Run this command:
 
@@ -42,7 +61,7 @@ You should see output like this:
   ➜  Network: use --host to expose
 ```
 
-### Step 3: Open in Browser
+### Step 4: Open in Browser
 
 Open your web browser and go to:
 
@@ -50,20 +69,28 @@ Open your web browser and go to:
 http://localhost:5173
 ```
 
-The website should now be running! You can click buttons, submit forms, and see everything working.
+The website should now be running! You can:
+- Create an account
+- Sign in
+- Create invoices
+- View your invoice dashboard
 
 To stop the server, press `Ctrl+C` in your terminal.
 
 ---
 
-## 📦 Deploy to Vercel (Recommended)
+## 📦 Deploy to Netlify
 
-Vercel is a free hosting platform perfect for this project. Follow these exact steps:
+Netlify is the recommended hosting platform for this project because it supports:
+- Static site hosting
+- Serverless Functions (for Stripe and email)
+- Automatic HTTPS
+- Free tier with generous limits
 
 ### Prerequisites for Deployment
 
 1. **GitHub Account** - Create one at [github.com](https://github.com) if you don't have one
-2. **Vercel Account** - Create one at [vercel.com](https://vercel.com) (you can sign up with your GitHub account)
+2. **Netlify Account** - Create one at [netlify.com](https://netlify.com) (you can sign up with your GitHub account)
 
 ### Step 1: Push Your Project to GitHub
 
@@ -86,96 +113,368 @@ git branch -M main
 git push -u origin main
 ```
 
-### Step 2: Deploy to Vercel
+### Step 2: Deploy to Netlify
 
-#### Option A: Using Vercel Dashboard (Easiest)
+#### Option A: Using Netlify Dashboard (Recommended)
 
-1. Go to [vercel.com](https://vercel.com) and sign in
-2. Click the **"Add New..."** button, then **"Project"**
-3. Click **"Import Git Repository"**
-4. Select your GitHub repository from the list
-5. Vercel will auto-detect the settings:
-   - **Framework Preset:** Vite
-   - **Root Directory:** `./`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-6. Click **"Deploy"**
+1. Go to [app.netlify.com](https://app.netlify.com) and sign in
+2. Click **"Add new site"** → **"Import an existing project"**
+3. Select **"Deploy with GitHub"**
+4. Authorize Netlify to access your GitHub account
+5. Select your repository from the list
+6. Configure build settings:
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist`
+7. Add environment variables (click "Advanced" → "New variable"):
+   - `VITE_SUPABASE_URL`: `https://obeuygeumdymphyxorzv.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY`: (copy from your `.env` file)
+   - `VITE_OPENAI_API_KEY`: (optional - your OpenAI key)
+8. Click **"Deploy site"**
 
-That's it! Vercel will build and deploy your site. You'll get a URL like:
+That's it! Netlify will build and deploy your site. You'll get a URL like:
 ```
-https://whitmore-payments.vercel.app
+https://whitmore-payments.netlify.app
 ```
 
-#### Option B: Using Vercel CLI
+#### Option B: Using Netlify CLI
 
 If you prefer the command line:
 
-1. Install Vercel CLI:
+1. Install Netlify CLI:
 ```bash
-npm install -g vercel
+npm install -g netlify-cli
 ```
 
-2. Login to Vercel:
+2. Login to Netlify:
 ```bash
-vercel login
+netlify login
 ```
 
-3. Deploy:
+3. Initialize and deploy:
 ```bash
-vercel
+netlify init
 ```
 
 4. Follow the prompts:
-   - **Set up and deploy?** Press `Y`
-   - **Which scope?** Select your account
-   - **Link to existing project?** Press `N`
-   - **Project name?** Press Enter (or type a custom name)
-   - **Directory?** Press Enter (uses current directory)
-   - **Override settings?** Press `N`
+   - **Create a new site?** Press `Y`
+   - **Team?** Select your account
+   - **Site name?** Press Enter (or type a custom name)
+   - **Build command:** `npm run build`
+   - **Directory to deploy:** `dist`
 
-5. Deploy to production:
+5. Deploy:
 ```bash
-vercel --prod
+netlify deploy --prod
 ```
 
 Your site is now live!
 
 ---
 
-## 🔧 Environment Variables
+## 🔧 Configure Stripe Payments
 
-The project has environment variables set up in the `.env` file:
+To enable payment processing, you need to configure Stripe:
 
-```bash
-# Supabase (already configured)
-VITE_SUPABASE_URL=https://obeuygeumdymphyxorzv.supabase.co
-VITE_SUPABASE_ANON_KEY=[configured]
+### Step 1: Create a Stripe Account
 
-# OpenAI API Key (required for AI Invoice Generator)
-VITE_OPENAI_API_KEY=your_openai_api_key_here
+1. Go to [stripe.com](https://stripe.com) and sign up
+2. Complete account verification
+
+### Step 2: Get Your API Keys
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com)
+2. Click **Developers** → **API keys**
+3. Copy your **Secret key** (starts with `sk_test_` or `sk_live_`)
+
+### Step 3: Configure Netlify Function
+
+Open `netlify/functions/create-checkout.ts` and add Stripe integration:
+
+```typescript
+import { Handler } from '@netlify/functions';
+import Stripe from 'stripe';
+
+// TODO: Add your Stripe secret key here
+// Get it from: https://dashboard.stripe.com/apikeys
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-11-20.acacia',
+});
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  try {
+    const { invoiceId, amount, invoiceNumber } = JSON.parse(event.body || '{}');
+
+    if (!invoiceId || !amount || !invoiceNumber) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing required fields' }),
+      };
+    }
+
+    const amountInCents = Math.round(parseFloat(amount) * 100);
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Invoice ${invoiceNumber}`,
+            },
+            unit_amount: amountInCents,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.URL}/invoice/${invoiceId}?payment=success`,
+      cancel_url: `${process.env.URL}/invoice/${invoiceId}?payment=cancelled`,
+      metadata: {
+        invoiceId,
+      },
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ url: session.url }),
+    };
+  } catch (error) {
+    console.error('Checkout error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    };
+  }
+};
 ```
 
-### 🤖 Enable AI Invoice Generator (Optional)
+### Step 4: Add Stripe Secret Key to Netlify
 
-To use the AI-powered invoice generation feature:
+1. Go to Netlify Dashboard → Your Site → **Site settings** → **Environment variables**
+2. Click **Add a variable**
+3. Add:
+   - **Key:** `STRIPE_SECRET_KEY`
+   - **Value:** Your Stripe secret key (from Step 2)
+4. Click **Save**
+5. Redeploy your site
 
-1. Get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Open `.env` file
-3. Replace `your_openai_api_key_here` with your actual key
-4. Restart the dev server
+### Step 5: Configure Stripe Webhook
 
-**See `AI_INVOICE_SETUP.md` for detailed setup instructions.**
+Open `netlify/functions/stripe-webhook.ts` and add webhook handling:
 
-Without the OpenAI key, the site works perfectly - just the AI invoice feature won't be available.
+```typescript
+import { Handler } from '@netlify/functions';
+import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
-**For Vercel Deployment:**
-Environment variables are automatically read from the `.env` file.
+// TODO: Add your Stripe secret key and webhook secret
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-11-20.acacia',
+});
 
-To update in Vercel:
-1. Go to your project in Vercel Dashboard
-2. Click **Settings** → **Environment Variables**
-3. Add `VITE_OPENAI_API_KEY` with your key
-4. Redeploy
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  try {
+    const sig = event.headers['stripe-signature'];
+
+    if (!sig) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing stripe-signature header' }),
+      };
+    }
+
+    // Verify webhook signature
+    const stripeEvent = stripe.webhooks.constructEvent(
+      event.body || '',
+      sig,
+      webhookSecret
+    );
+
+    // Handle the event
+    switch (stripeEvent.type) {
+      case 'checkout.session.completed': {
+        const session = stripeEvent.data.object as Stripe.Checkout.Session;
+        const invoiceId = session.metadata?.invoiceId;
+
+        if (invoiceId) {
+          // Update invoice status to paid
+          await supabase
+            .from('invoices')
+            .update({ status: 'paid' })
+            .eq('id', invoiceId);
+
+          // Record payment
+          await supabase
+            .from('payments')
+            .insert({
+              invoice_id: invoiceId,
+              amount: (session.amount_total || 0) / 100,
+              payment_method: 'card',
+              stripe_payment_id: session.payment_intent as string,
+              status: 'completed',
+              paid_at: new Date().toISOString(),
+            });
+        }
+        break;
+      }
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ received: true }),
+    };
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Webhook processing failed' }),
+    };
+  }
+};
+```
+
+### Step 6: Set Up Webhook Endpoint in Stripe
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → **Developers** → **Webhooks**
+2. Click **Add endpoint**
+3. Enter your endpoint URL: `https://your-site.netlify.app/.netlify/functions/stripe-webhook`
+4. Select events to listen to: `checkout.session.completed`
+5. Click **Add endpoint**
+6. Copy the **Signing secret** (starts with `whsec_`)
+7. Add it to Netlify environment variables:
+   - **Key:** `STRIPE_WEBHOOK_SECRET`
+   - **Value:** Your webhook signing secret
+
+---
+
+## 📧 Configure Email Notifications
+
+To send invoice emails, configure an email provider:
+
+### Option A: Using Resend (Recommended)
+
+1. Sign up at [resend.com](https://resend.com)
+2. Get your API key from the dashboard
+3. Update `netlify/functions/send-invoice.ts`:
+
+```typescript
+import { Handler } from '@netlify/functions';
+import { Resend } from 'resend';
+
+// TODO: Add your Resend API key here
+// Get it from: https://resend.com/api-keys
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const handler: Handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  try {
+    const { invoiceId, recipientEmail, invoiceUrl } = JSON.parse(event.body || '{}');
+
+    if (!invoiceId || !recipientEmail || !invoiceUrl) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing required fields' }),
+      };
+    }
+
+    // Send email using Resend
+    await resend.emails.send({
+      from: 'invoices@yourdomain.com',
+      to: recipientEmail,
+      subject: 'New Invoice from Whitmore PAYMENTS',
+      html: `
+        <h2>You have received a new invoice</h2>
+        <p>Please click the link below to view and pay your invoice:</p>
+        <a href="${invoiceUrl}">${invoiceUrl}</a>
+      `,
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true }),
+    };
+  } catch (error) {
+    console.error('Email error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error' }),
+    };
+  }
+};
+```
+
+4. Add your Resend API key to Netlify environment variables:
+   - **Key:** `RESEND_API_KEY`
+   - **Value:** Your Resend API key
+
+### Option B: Using SendGrid
+
+1. Sign up at [sendgrid.com](https://sendgrid.com)
+2. Create an API key
+3. Update the send-invoice function with SendGrid integration
+4. Add `SENDGRID_API_KEY` to Netlify environment variables
+
+---
+
+## 🗄️ Supabase Configuration
+
+The database is already set up with the following tables:
+
+### Tables
+
+1. **profiles** - User profile information
+   - Linked to auth.users
+   - Stores user details
+
+2. **invoices** - Invoice records
+   - Belongs to user
+   - Contains invoice details and status
+   - Has secure access token for public viewing
+
+3. **invoice_items** - Line items for invoices
+   - Belongs to invoice
+   - Contains item details and pricing
+
+4. **payments** - Payment records
+   - Belongs to invoice
+   - Tracks payment status and Stripe IDs
+
+### Row Level Security
+
+All tables have RLS enabled:
+- Users can only access their own data
+- Public can view invoices via secure token
+- Proper authentication required for all operations
 
 ---
 
@@ -199,48 +498,60 @@ Open your browser to the URL shown (usually `http://localhost:4173`).
 
 ```
 whitmore-payments/
-├── dist/                  # Production build output (created by npm run build)
+├── dist/                     # Production build output
+├── netlify/
+│   └── functions/            # Serverless functions
+│       ├── create-checkout.ts    # Stripe checkout
+│       ├── stripe-webhook.ts     # Payment webhooks
+│       └── send-invoice.ts       # Email sending
 ├── src/
-│   ├── components/        # All React components
-│   │   ├── Header.tsx    # Navigation header
-│   │   ├── Hero.tsx      # Hero section
-│   │   ├── Pricing.tsx   # Pricing cards
-│   │   ├── FAQ.tsx       # FAQ accordion
-│   │   └── ...           # Other components
+│   ├── components/           # React components
+│   │   ├── Auth/            # Authentication components
+│   │   ├── Header.tsx       # Navigation
+│   │   └── ...              # Other components
+│   ├── contexts/
+│   │   └── AuthContext.tsx  # Auth state management
 │   ├── lib/
-│   │   └── supabase.ts   # Database connection
-│   ├── App.tsx           # Main application
-│   ├── main.tsx          # Entry point
-│   └── index.css         # Global styles
-├── .env                   # Environment variables
-├── package.json           # Project configuration
-├── vite.config.ts         # Vite configuration
-├── tailwind.config.js     # Tailwind CSS configuration
-└── index.html             # HTML entry point
+│   │   ├── supabase.ts      # Database connection
+│   │   ├── invoiceApi.ts    # Invoice API functions
+│   │   └── openai.ts        # OpenAI integration
+│   ├── pages/
+│   │   ├── Dashboard.tsx    # User dashboard
+│   │   ├── InvoiceDetail.tsx # Invoice details
+│   │   └── PublicInvoice.tsx # Public invoice view
+│   ├── App.tsx              # Main application
+│   ├── main.tsx             # Entry point
+│   └── index.css            # Global styles
+├── supabase/
+│   └── migrations/          # Database migrations
+├── .env                     # Environment variables
+├── package.json             # Project configuration
+└── README.md                # This file
 ```
 
 ---
 
 ## ✨ What's Included
 
-### Interactive Features
-- ✅ **AI Invoice Generator** (NEW!) - Generate invoices from natural language using OpenAI
-- ✅ **Invoice Dashboard** - View, manage, and track all invoices
-- ✅ **Trial signup forms** - Collects leads with validation
-- ✅ **Contact sales forms** - Team plan inquiries
-- ✅ **Demo modal** - Product demonstration
-- ✅ **Smooth scroll navigation** - Header links scroll to sections
-- ✅ **FAQ accordion** - Expandable questions
-- ✅ **Database integration** - All forms and invoices save to Supabase
+### Core Features
+- ✅ **User Authentication** - Supabase email/password auth
+- ✅ **Invoice Dashboard** - View and manage all invoices
+- ✅ **Invoice Creation** - Create detailed invoices with line items
+- ✅ **Public Invoice Links** - Secure shareable links for clients
+- ✅ **Payment Processing** - Stripe integration (stub ready)
+- ✅ **Email Notifications** - Send invoices via email (stub ready)
+- ✅ **AI Invoice Generator** - Generate invoices from natural language
 
 ### Technical Features
 - ✅ **React 18** with TypeScript
-- ✅ **OpenAI GPT-4** integration for AI features
+- ✅ **Supabase** for auth and database
+- ✅ **Netlify Functions** for serverless backend
+- ✅ **Stripe** payment integration (ready to configure)
+- ✅ **Email** notifications (ready to configure)
+- ✅ **OpenAI GPT-4** for AI features
 - ✅ **Tailwind CSS** for styling
-- ✅ **Supabase** database backend with RLS
-- ✅ **Form validation** with error handling
-- ✅ **Responsive design** - Works on mobile, tablet, desktop
-- ✅ **Accessible** - Keyboard navigation, ARIA labels
+- ✅ **Row Level Security** for data protection
+- ✅ **Responsive design** - Works on all devices
 
 ---
 
@@ -248,14 +559,32 @@ whitmore-payments/
 
 After deploying, verify everything works:
 
-1. **Open your deployed URL** (e.g., `https://whitmore-payments.vercel.app`)
-2. **Test "Start Free Trial" button** - Should open modal with form
-3. **Submit the form** - Should show success message
-4. **Click "Watch Demo"** - Should open demo modal
-5. **Click "Talk to Sales"** - Should open contact form
-6. **Test navigation links** - Should scroll to sections smoothly
-7. **Test FAQ** - Questions should expand/collapse
-8. **Test on mobile** - Open site on your phone, everything should work
+1. **Authentication**
+   - [ ] Sign up creates new account
+   - [ ] Sign in works with correct credentials
+   - [ ] Sign out works properly
+   - [ ] Password reset sends email
+
+2. **Dashboard**
+   - [ ] Dashboard shows user's invoices
+   - [ ] Stats are calculated correctly
+   - [ ] Can navigate to invoice details
+
+3. **Invoice Management**
+   - [ ] Can create new invoices
+   - [ ] Can view invoice details
+   - [ ] Can copy public invoice link
+   - [ ] Public link opens invoice without login
+
+4. **Payments** (after Stripe configuration)
+   - [ ] "Pay Now" button works
+   - [ ] Redirects to Stripe checkout
+   - [ ] Payment success updates invoice status
+
+5. **Emails** (after email configuration)
+   - [ ] "Send Invoice" button works
+   - [ ] Email is delivered to recipient
+   - [ ] Email contains correct invoice link
 
 ---
 
@@ -269,36 +598,25 @@ npm install
 npm run build
 ```
 
-### Port 5173 is already in use
-```bash
-# Kill the process using that port
-# On Mac/Linux:
-lsof -ti:5173 | xargs kill -9
-# On Windows:
-netstat -ano | findstr :5173
-# Then: taskkill /PID [process_id] /F
+### Authentication not working
+- Check Supabase URL and anon key in `.env`
+- Verify environment variables are set in Netlify
+- Check browser console for errors
 
-# Or use a different port:
-npm run dev -- --port 3000
-```
+### Invoices not saving
+- Check Supabase connection
+- Verify RLS policies are set up correctly
+- Check network tab for API errors
 
-### Changes not showing in browser
-- Hard refresh: `Ctrl+Shift+R` (or `Cmd+Shift+R` on Mac)
-- Clear browser cache
-- Restart the dev server
+### Stripe payments not working
+- Verify Stripe secret key is set in Netlify
+- Check webhook endpoint is configured in Stripe
+- Review Netlify function logs
 
-### Vercel build fails
-1. Check build logs in Vercel dashboard
-2. Ensure `.env` file is committed to your repository
-3. Verify build command is `npm run build`
-4. Verify output directory is `dist`
-
----
-
-## 📚 Additional Documentation
-
-- **DEPLOYMENT.md** - Detailed deployment guide with advanced options
-- **FUNCTIONALITY_SUMMARY.md** - Complete technical documentation of all features
+### Emails not sending
+- Verify email provider API key is set
+- Check function logs for errors
+- Test with a different email address
 
 ---
 
@@ -307,27 +625,21 @@ npm run dev -- --port 3000
 | Command | Description |
 |---------|-------------|
 | `npm install` | Install all dependencies |
-| `npm run dev` | Start development server (http://localhost:5173) |
-| `npm run build` | Build for production (outputs to `dist/`) |
-| `npm run preview` | Preview production build locally |
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
 | `npm run typecheck` | Check TypeScript types |
 | `npm run lint` | Run ESLint |
 
 ---
 
-## 🚀 Next Steps After Deployment
+## 🚀 Next Steps
 
-1. **Custom Domain** (Optional)
-   - Go to Vercel Dashboard → Your Project → Settings → Domains
-   - Add your custom domain and follow DNS setup instructions
-
-2. **Monitor Form Submissions**
-   - Log into your Supabase dashboard
-   - View the `leads` table to see all form submissions
-
-3. **Analytics** (Optional)
-   - Add Vercel Analytics: Project Settings → Analytics → Enable
-   - Or add Google Analytics to `index.html`
+1. **Configure Stripe** - Follow the Stripe setup instructions above
+2. **Configure Email** - Set up Resend or SendGrid
+3. **Custom Domain** - Add your domain in Netlify settings
+4. **Monitor Usage** - Check Supabase and Netlify dashboards
+5. **Add Features** - Customize the app for your needs
 
 ---
 
@@ -336,9 +648,9 @@ npm run dev -- --port 3000
 If you run into issues:
 
 1. Check the troubleshooting section above
-2. Review the error message carefully
-3. Search the error on Google or Stack Overflow
-4. Check Vercel documentation at [vercel.com/docs](https://vercel.com/docs)
+2. Review Netlify function logs
+3. Check Supabase dashboard for database errors
+4. Review browser console for client-side errors
 
 ---
 
@@ -348,4 +660,4 @@ All rights reserved - Whitmore PAYMENTS
 
 ---
 
-**Your site is ready to deploy!** Just follow the steps above. 🎉
+**Your invoice management system is ready to deploy!** Follow the setup instructions above to get started. 🎉

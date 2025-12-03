@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
@@ -14,18 +15,30 @@ import { SignupModal } from './components/SignupModal';
 import { DemoModal } from './components/DemoModal';
 import { ContactSalesModal } from './components/ContactSalesModal';
 import { InvoiceGeneratorModal } from './components/InvoiceGeneratorModal';
+import AuthModal from './components/Auth/AuthModal';
+import Dashboard from './pages/Dashboard';
+import InvoiceDetail from './pages/InvoiceDetail';
+import PublicInvoice from './pages/PublicInvoice';
 
-function App() {
+function AppContent() {
+  const { user, loading } = useAuth();
   const [signupModalOpen, setSignupModalOpen] = useState(false);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [contactSalesModalOpen, setContactSalesModalOpen] = useState(false);
   const [invoiceGeneratorOpen, setInvoiceGeneratorOpen] = useState(false);
   const [signupSource, setSignupSource] = useState('unknown');
-  const [userEmail, setUserEmail] = useState('demo@example.com'); // In real app, this would come from auth
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [view, setView] = useState<'landing' | 'dashboard' | 'invoice' | 'public-invoice'>('landing');
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
+  const [publicInvoiceToken, setPublicInvoiceToken] = useState<string>('');
 
   const handleStartTrial = (source: string = 'unknown') => {
-    setSignupSource(source);
-    setSignupModalOpen(true);
+    if (user) {
+      setView('dashboard');
+    } else {
+      setSignupSource(source);
+      setAuthModalOpen(true);
+    }
   };
 
   const handleWatchDemo = () => {
@@ -37,8 +50,65 @@ function App() {
   };
 
   const handleOpenInvoiceGenerator = () => {
+    if (user) {
+      setView('dashboard');
+    } else {
+      setInvoiceGeneratorOpen(true);
+    }
+  };
+
+  const handleCreateInvoice = () => {
     setInvoiceGeneratorOpen(true);
   };
+
+  const handleViewInvoice = (invoiceId: string) => {
+    setSelectedInvoiceId(invoiceId);
+    setView('invoice');
+  };
+
+  const handleBackToDashboard = () => {
+    setView('dashboard');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  const pathname = window.location.pathname;
+  const publicInvoiceMatch = pathname.match(/^\/invoice\/([a-f0-9]+)$/);
+
+  if (publicInvoiceMatch) {
+    return <PublicInvoice token={publicInvoiceMatch[1]} />;
+  }
+
+  if (user && view === 'dashboard') {
+    return (
+      <>
+        <Dashboard
+          onCreateInvoice={handleCreateInvoice}
+          onViewInvoice={handleViewInvoice}
+        />
+        <InvoiceGeneratorModal
+          isOpen={invoiceGeneratorOpen}
+          onClose={() => setInvoiceGeneratorOpen(false)}
+          userEmail={user.email || ''}
+        />
+      </>
+    );
+  }
+
+  if (user && view === 'invoice' && selectedInvoiceId) {
+    return (
+      <InvoiceDetail
+        invoiceId={selectedInvoiceId}
+        onBack={handleBackToDashboard}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -62,6 +132,11 @@ function App() {
       </main>
       <Footer />
 
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode="signup"
+      />
       <SignupModal
         isOpen={signupModalOpen}
         onClose={() => setSignupModalOpen(false)}
@@ -78,9 +153,17 @@ function App() {
       <InvoiceGeneratorModal
         isOpen={invoiceGeneratorOpen}
         onClose={() => setInvoiceGeneratorOpen(false)}
-        userEmail={userEmail}
+        userEmail={user?.email || 'demo@example.com'}
       />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
