@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Mail, Download, Trash2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Mail, Trash2, ExternalLink } from 'lucide-react';
 import { getInvoiceById, updateInvoice, deleteInvoice, InvoiceWithItems } from '../lib/invoiceApi';
 import Button from '../components/Button';
+import AIEmailGenerator from '../components/AIEmailGenerator';
+import { useAuth } from '../contexts/AuthContext';
 
 interface InvoiceDetailProps {
   invoiceId: string;
@@ -9,10 +11,13 @@ interface InvoiceDetailProps {
 }
 
 export default function InvoiceDetail({ invoiceId, onBack }: InvoiceDetailProps) {
+  const { user } = useAuth();
   const [invoice, setInvoice] = useState<InvoiceWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
 
   useEffect(() => {
     loadInvoice();
@@ -45,18 +50,27 @@ export default function InvoiceDetail({ invoiceId, onBack }: InvoiceDetailProps)
         invoiceId: invoice.id,
         recipientEmail: invoice.client_email,
         invoiceUrl: publicUrl,
+        customSubject: emailSubject || undefined,
+        customBody: emailBody || undefined,
       }),
     });
 
     if (response.ok) {
       await updateInvoice(invoice.id!, { status: 'sent' });
       await loadInvoice();
+      setEmailSubject('');
+      setEmailBody('');
       alert('Invoice sent successfully!');
     } else {
       alert('Failed to send invoice. Please try again.');
     }
 
     setActionLoading(false);
+  };
+
+  const handleEmailGenerated = (subject: string, body: string) => {
+    setEmailSubject(subject);
+    setEmailBody(body);
   };
 
   const handleDelete = async () => {
@@ -116,6 +130,14 @@ export default function InvoiceDetail({ invoiceId, onBack }: InvoiceDetailProps)
               Back to Dashboard
             </Button>
             <div className="flex items-center gap-3">
+              {user && (
+                <AIEmailGenerator
+                  invoiceId={invoice.id}
+                  emailType="invoice_created"
+                  onEmailGenerated={handleEmailGenerated}
+                  userId={user.id}
+                />
+              )}
               <Button
                 variant="secondary"
                 onClick={handleCopyLink}

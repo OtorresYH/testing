@@ -182,7 +182,7 @@ export async function getInvoiceByToken(token: string): Promise<{ data: InvoiceW
       return { data: null, error: itemsError };
     }
 
-    const { data: paymentsData } = await supabase
+    await supabase
       .from('payments')
       .select('*')
       .eq('invoice_id', invoiceData.id)

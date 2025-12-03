@@ -19,6 +19,7 @@ import AuthModal from './components/Auth/AuthModal';
 import Dashboard from './pages/Dashboard';
 import InvoiceDetail from './pages/InvoiceDetail';
 import PublicInvoice from './pages/PublicInvoice';
+import AISupportChat from './components/AISupportChat';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -30,7 +31,6 @@ function AppContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [view, setView] = useState<'landing' | 'dashboard' | 'invoice' | 'public-invoice'>('landing');
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
-  const [publicInvoiceToken, setPublicInvoiceToken] = useState<string>('');
 
   const handleStartTrial = (source: string = 'unknown') => {
     if (user) {
@@ -131,6 +131,8 @@ function AppContent() {
         <FinalCTA onStartTrial={() => handleStartTrial('final-cta')} />
       </main>
       <Footer />
+
+      <AISupportChat userId={user?.id} />
 
       <AuthModal
         isOpen={authModalOpen}

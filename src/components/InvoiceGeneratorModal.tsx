@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { AIInvoiceGenerator } from './AIInvoiceGenerator';
 import { InvoiceDashboard } from './InvoiceDashboard';
-import { Invoice } from '../lib/invoices';
 
 interface InvoiceGeneratorModalProps {
   isOpen: boolean;
@@ -17,7 +16,7 @@ export const InvoiceGeneratorModal: React.FC<InvoiceGeneratorModalProps> = ({
 }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleInvoiceCreated = (invoice: Invoice) => {
+  const handleInvoiceCreated = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 

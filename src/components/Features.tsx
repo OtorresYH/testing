@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Link as LinkIcon, RefreshCw, Users, Sparkles } from 'lucide-react';
+import { Zap, Link as LinkIcon, RefreshCw, Sparkles } from 'lucide-react';
 import { Card } from './Card';
 import { Section } from './Section';
 import { Button } from './Button';

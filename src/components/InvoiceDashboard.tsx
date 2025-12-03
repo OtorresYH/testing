@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Trash2, Send, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
+import { FileText, Trash2, Send, DollarSign, Clock, CheckCircle2 } from 'lucide-react';
 import { Card } from './Card';
-import { Button } from './Button';
 import { getInvoices, deleteInvoice, updateInvoiceStatus, Invoice } from '../lib/invoices';
 
 interface InvoiceDashboardProps {

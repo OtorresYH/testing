@@ -371,6 +371,188 @@ export const handler: Handler = async (event) => {
 
 ---
 
+## 🤖 Configure AI Features (OpenAI Integration)
+
+Whitmore PAYMENTS includes powerful AI features powered by OpenAI GPT-4o-mini:
+
+### AI Features
+
+1. **AI Email Drafting** - Automatically generate professional emails for:
+   - New invoice notifications
+   - Payment reminders
+   - Overdue notices
+   - Welcome/onboarding messages
+   - Plan upgrade offers
+
+2. **AI Support Chat** - An intelligent chat widget that:
+   - Answers questions about plans and pricing
+   - Helps potential customers choose the right plan
+   - Provides information about features
+   - Works for both anonymous visitors and logged-in users
+
+### Setup Instructions
+
+#### Step 1: Get Your OpenAI API Key
+
+1. Go to [OpenAI Platform](https://platform.openai.com)
+2. Sign up or sign in to your account
+3. Navigate to **API keys** section
+4. Click **Create new secret key**
+5. Copy the key (starts with `sk-`)
+
+**Important:** OpenAI API usage is billed based on tokens. The app uses GPT-4o-mini which is cost-effective (~$0.15 per 1M input tokens).
+
+#### Step 2: Add to Environment Variables
+
+For local development, add to your `.env` file:
+```bash
+OPENAI_API_KEY=sk-your-actual-key-here
+```
+
+For Netlify deployment:
+1. Go to Netlify Dashboard → Your Site → **Site settings** → **Environment variables**
+2. Click **Add a variable**
+3. Add:
+   - **Key:** `OPENAI_API_KEY`
+   - **Value:** Your OpenAI API key
+4. Click **Save**
+5. Redeploy your site
+
+#### Step 3: How the AI Features Work
+
+**AI Email Generation (`/.netlify/functions/ai-generate-email`)**
+
+This function:
+- Takes invoice details and email type as input
+- Generates a professional, contextual email using GPT-4o-mini
+- Returns subject line, plain text, and HTML formatted body
+- Logs all generated emails to the database for review
+- Never exposes the API key to the frontend (server-side only)
+
+Example usage from the invoice detail page:
+```typescript
+const response = await fetch('/.netlify/functions/ai-generate-email', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    type: 'invoice_created',
+    invoiceId: 'uuid',
+    extraNotes: 'Custom message here',
+    userId: 'uuid',
+  }),
+});
+```
+
+**AI Support Chat (`/.netlify/functions/ai-support-chat`)**
+
+This function:
+- Maintains conversation context (last 10 messages)
+- Understands Whitmore Payments plans and features
+- Provides accurate information about pricing
+- Gracefully handles questions outside its scope
+- Logs all conversations to database
+- Implements rate limiting and message length limits
+
+The chat widget appears as a floating button on all pages and can be used by:
+- Anonymous visitors researching plans
+- Logged-in users needing help
+
+#### Step 4: Customize AI Behavior
+
+**Email Generation Prompts**
+
+Edit the system prompt in `netlify/functions/ai-generate-email.ts` to change:
+- Tone (formal, casual, friendly)
+- Email structure
+- Company branding
+- Default messaging
+
+**Support Chat Knowledge Base**
+
+Edit the system prompt in `netlify/functions/ai-support-chat.ts` to:
+- Update plan information
+- Add new features
+- Change pricing details
+- Modify the assistant's personality
+
+#### AI Activity Logging
+
+The app automatically logs AI activity to Supabase:
+
+**`ai_email_logs` table:**
+- Tracks all generated emails
+- Stores subject, body, invoice ID
+- Links to user who generated it
+- Timestamp for auditing
+
+**`ai_support_sessions` table:**
+- Tracks chat sessions
+- Links to user (if logged in)
+- Stores message count and duration
+
+**`ai_support_messages` table:**
+- Stores individual chat messages
+- Links to session
+- Includes role (user/assistant)
+- Full message content
+
+View logs in your Supabase dashboard to:
+- Monitor AI usage
+- Review generated content
+- Analyze common support questions
+- Improve AI responses
+
+#### Important Security Notes
+
+✅ **API key is server-side only** - Never exposed to frontend
+✅ **Rate limiting** - Max message length and history limits
+✅ **User data protection** - RLS policies control log access
+✅ **Error handling** - Graceful fallbacks if OpenAI fails
+✅ **Cost control** - Uses efficient GPT-4o-mini model
+
+#### Limitations and Best Practices
+
+**AI-Generated Emails:**
+- Always review before sending
+- Customize as needed for your brand
+- Add personal touches for important clients
+- Monitor logs to improve prompts
+
+**AI Support Chat:**
+- Only knows information in its system prompt
+- Directs complex questions to human support
+- May require prompt updates as plans change
+- Not a replacement for human support
+
+**Cost Management:**
+- Monitor usage in OpenAI dashboard
+- Set up billing alerts
+- Consider caching common responses
+- Adjust max_tokens if needed
+
+### Testing AI Features
+
+After configuration:
+
+1. **Test Email Generation:**
+   - Create an invoice
+   - Click "Generate with AI"
+   - Review the generated email
+   - Verify it includes invoice details
+
+2. **Test Support Chat:**
+   - Click the chat button
+   - Ask about plans and pricing
+   - Verify accurate responses
+   - Test as both logged-in and anonymous user
+
+3. **Check Logs:**
+   - View `ai_email_logs` in Supabase
+   - View `ai_support_sessions` and `ai_support_messages`
+   - Verify data is being logged correctly
+
+---
+
 ## 📧 Configure Email Notifications
 
 To send invoice emails, configure an email provider:
@@ -540,7 +722,8 @@ whitmore-payments/
 - ✅ **Public Invoice Links** - Secure shareable links for clients
 - ✅ **Payment Processing** - Stripe integration (stub ready)
 - ✅ **Email Notifications** - Send invoices via email (stub ready)
-- ✅ **AI Invoice Generator** - Generate invoices from natural language
+- ✅ **AI Email Drafting** - Generate professional emails with AI
+- ✅ **AI Support Chat** - Intelligent customer support assistant
 
 ### Technical Features
 - ✅ **React 18** with TypeScript
@@ -548,7 +731,7 @@ whitmore-payments/
 - ✅ **Netlify Functions** for serverless backend
 - ✅ **Stripe** payment integration (ready to configure)
 - ✅ **Email** notifications (ready to configure)
-- ✅ **OpenAI GPT-4** for AI features
+- ✅ **OpenAI GPT-4o-mini** for AI features
 - ✅ **Tailwind CSS** for styling
 - ✅ **Row Level Security** for data protection
 - ✅ **Responsive design** - Works on all devices
