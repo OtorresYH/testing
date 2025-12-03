@@ -60,11 +60,11 @@ export async function createInvoice(invoice: Invoice, items: InvoiceItem[]): Pro
         client_name: invoice.client_name,
         client_email: invoice.client_email,
         client_address: invoice.client_address,
-        status: invoice.status,
+        status: invoice.status || 'draft',
         issue_date: invoice.issue_date,
         due_date: invoice.due_date,
         subtotal: invoice.subtotal,
-        tax: invoice.tax,
+        tax: invoice.tax || 0,
         total: invoice.total,
         notes: invoice.notes,
       }])
@@ -260,12 +260,17 @@ export async function getInvoicePayments(invoiceId: string): Promise<{ data: Pay
 }
 
 async function generateInvoiceNumber(): Promise<string> {
-  const { data, error } = await supabase.rpc('generate_invoice_number');
+  try {
+    const { data, error } = await supabase.rpc('generate_invoice_number');
 
-  if (error || !data) {
+    if (error || !data) {
+      const timestamp = Date.now().toString().slice(-5);
+      return `INV-${timestamp}`;
+    }
+
+    return data;
+  } catch (err) {
     const timestamp = Date.now().toString().slice(-5);
     return `INV-${timestamp}`;
   }
-
-  return data;
 }

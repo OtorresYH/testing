@@ -1,0 +1,68 @@
+# Netlify Configuration File
+# This file controls how Netlify builds and deploys your site
+
+[build]
+  # Directory with the serverless functions
+  functions = "netlify/functions"
+
+  # Build command
+  command = "npm run build"
+
+  # Directory that contains the build output
+  publish = "dist"
+
+# Redirect all server requests to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables used in build
+# Note: Sensitive variables should be set in Netlify Dashboard
+[build.environment]
+  NODE_VERSION = "18"
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Function-specific configuration
+[functions]
+  # Directory with the function source files
+  directory = "netlify/functions"
+
+  # Node.js version for functions
+  node_bundler = "esbuild"
+
+# ============================================
+# ENVIRONMENT VARIABLES CONFIGURATION
+# ============================================
+# Add these variables in Netlify Dashboard:
+# Site Settings -> Environment Variables
+#
+# Required variables:
+# - VITE_SUPABASE_URL (from Supabase project settings)
+# - VITE_SUPABASE_ANON_KEY (from Supabase project settings)
+# - SUPABASE_SERVICE_KEY (from Supabase project settings - keep secret!)
+# - VITE_OPENAI_API_KEY (from OpenAI dashboard - optional for AI features)
+#
+# Optional variables for payment processing:
+# - STRIPE_SECRET_KEY (from Stripe dashboard)
+# - STRIPE_WEBHOOK_SECRET (from Stripe webhook configuration)
+#
+# Optional variables for email:
+# - RESEND_API_KEY (from Resend.com)
+# OR
+# - SENDGRID_API_KEY (from SendGrid.com)
+# ============================================
